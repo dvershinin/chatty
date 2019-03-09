@@ -1,0 +1,32 @@
+#! /bin/sh
+
+if test -f /usr/share/dict/words; then
+    cp /usr/share/dict/words tmp.words
+elif test -f /usr/dict/words; then
+    cp /usr/dict/words tmp.words
+else
+    echo 'no words file'
+    exit 1
+fi
+
+ruby -nle 'w = $_;printf "%s\t%s\n", w, w' tmp.words > tmp.words-dict
+
+../dict-test -p tmp.words-dict > tmp.out
+sort tmp.words-dict > tmp.x
+sort tmp.out	    > tmp.y
+cmp tmp.x tmp.y || exit 1
+
+ruby sample.rb -100 tmp.words > tmp.words-100
+
+rm -f tmp.grep
+for i in `cat tmp.words-100`; do
+    egrep "^$i	" tmp.words-dict >> tmp.grep
+done
+
+cat tmp.words-100 | ../dict-test -e tmp.words-dict > tmp.e
+cat tmp.words-100 | ../dict-test -l tmp.words-dict > tmp.l
+
+cmp tmp.grep tmp.e || exit 1
+cmp tmp.grep tmp.l || exit 1
+
+exit 0

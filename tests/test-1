@@ -1,0 +1,27 @@
+#! /bin/sh
+
+for i in 1 2 3 4 5; do  # do 5 times
+    ruby shuffle.rb test-dict > tmp.dict
+
+    ../dict-test -p tmp.dict > tmp.out
+    sort tmp.dict  > tmp.x
+    sort tmp.out   > tmp.y
+    cmp tmp.x tmp.y || exit 1
+
+    ruby -ne 'puts $1 if /^(.*)\t/' tmp.dict > tmp.keys
+    # make redundanct keys for -l search.
+    ruby -ne 'puts $1 + $1 if /^(.*)\t/' tmp.dict > tmp.keys2
+
+    cat tmp.keys  | ../dict-test -e tmp.dict > tmp.out1
+    cat tmp.keys2 | ../dict-test -e tmp.dict > tmp.out2
+    cat tmp.keys  | ../dict-test -l tmp.dict > tmp.out3
+    cat tmp.keys2 | ../dict-test -l tmp.dict > tmp.out4
+    ruby -ne 'puts $1 + "\t" + $2 if /^(.*)\1\t(.*)/' tmp.out4 > tmp.out5
+
+    cmp tmp.dict  tmp.out1 || exit 1
+    cmp /dev/null tmp.out2 || exit 1
+    cmp tmp.dict  tmp.out3 || exit 1
+    cmp tmp.dict  tmp.out5 || exit 1
+done
+exit 0
+
